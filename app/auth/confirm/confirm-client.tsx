@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '../../../lib/supabase'
 import type { EmailOtpType } from '@supabase/supabase-js'
 
-export default function ConfirmPage() {
+export default function ConfirmClient() {
   const [message, setMessage] = useState('Verifying your email...')
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -37,5 +37,5 @@ export default function ConfirmPage() {
     verify()
   }, [router, searchParams])
 
-  return <main>{message}</main>
+  return <main className="min-h-screen flex items-center justify-center">{message}</main>
 }
