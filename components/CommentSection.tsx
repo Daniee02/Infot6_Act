@@ -13,32 +13,49 @@ type Comment = {
 export default function CommentSection({ articleId }: { articleId: number }) {
   const [comments, setComments] = useState<Comment[]>([])
   const [text, setText] = useState('')
+  const [loading, setLoading] = useState(true)
 
   const loadComments = async () => {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('article_comments')
       .select('id, article_id, comment_text, created_at')
       .eq('article_id', articleId)
       .order('created_at', { ascending: true })
 
+    if (error) {
+      console.error('Load comments error:', error.message)
+      return
+    }
+
     setComments(data || [])
+    setLoading(false)
   }
 
   const handleComment = async () => {
     if (!text.trim()) return
 
-    const { data } = await supabase.auth.getUser()
+    const { data, error: userError } = await supabase.auth.getUser()
+    if (userError) {
+      alert(userError.message)
+      return
+    }
     const user = data.user
     if (!user) {
       alert('Please log in to comment.')
       return
     }
 
-    await supabase.from('article_comments').insert({
+    const { error } = await supabase.from('article_comments').insert({
       article_id: articleId,
       user_id: user.id,
-      comment_text: text,
+      comment_text: text.trim(),
     })
+
+    if (error) {
+      alert('Comment failed: ' + error.message)
+      console.error('Comment error:', error.message)
+      return
+    }
 
     setText('')
     loadComments()
@@ -67,6 +84,10 @@ export default function CommentSection({ articleId }: { articleId: number }) {
         Comment
       </button>
 
+      {loading && (
+        <p className="mt-3 text-sm text-slate-400">Loading comments...</p>
+      )}
+
       <ul className="mt-4 space-y-3">
         {comments.map((c) => (
           <li
@@ -74,6 +95,9 @@ export default function CommentSection({ articleId }: { articleId: number }) {
             className="rounded-xl border border-white/10 bg-slate-900 px-3 py-2 text-sm"
           >
             {c.comment_text}
+            <p className="mt-1 text-[10px] text-slate-500">
+              {new Date(c.created_at).toLocaleString()}
+            </p>
           </li>
         ))}
       </ul>

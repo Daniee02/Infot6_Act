@@ -40,14 +40,14 @@ export default function DashboardPage() {
           <div className="mt-6 flex flex-col items-center gap-3">
             <Link
               href="/articles"
-              className="w-full max-w-xs rounded-2xl bg-blue-600 px-4 py-2 font-semibold hover:bg-blue-500"
+              className="w-full max-w-xs rounded-2xl bg-blue-600 px-4 py-2 text-sm font-semibold hover:bg-blue-500"
             >
               View Articles
             </Link>
 
             <Link
               href="/articles/new"
-              className="w-full max-w-xs rounded-2xl bg-emerald-600 px-4 py-2 font-semibold hover:bg-emerald-500"
+              className="w-full max-w-xs rounded-2xl bg-emerald-600 px-4 py-2 text-sm font-semibold hover:bg-emerald-500"
             >
               Publish Article
             </Link>
@@ -55,7 +55,7 @@ export default function DashboardPage() {
 
           <button
             onClick={handleLogout}
-            className="mt-6 rounded-2xl bg-red-600 px-6 py-2 font-semibold hover:bg-red-500"
+            className="mt-6 rounded-2xl bg-red-600 px-6 py-2 text-sm font-semibold hover:bg-red-500"
           >
             Logout
           </button>

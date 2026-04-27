@@ -7,26 +7,41 @@ export default function LikeButton({ articleId }: { articleId: number }) {
   const [count, setCount] = useState(0)
 
   const loadLikes = async () => {
-    const { count } = await supabase
+    const { count, error } = await supabase
       .from('article_likes')
       .select('*', { count: 'exact', head: true })
       .eq('article_id', articleId)
 
+    if (error) {
+      console.error('Load likes error:', error.message)
+      return
+    }
     setCount(count || 0)
   }
 
   const handleLike = async () => {
-    const { data } = await supabase.auth.getUser()
+    const { data, error: userError } = await supabase.auth.getUser()
+    if (userError) {
+      alert(userError.message)
+      return
+    }
+
     const user = data.user
     if (!user) {
       alert('Please log in to like.')
       return
     }
 
-    await supabase.from('article_likes').upsert({
+    const { error } = await supabase.from('article_likes').upsert({
       article_id: articleId,
       user_id: user.id,
     })
+
+    if (error) {
+      alert('Like failed: ' + error.message)
+      console.error('Like error:', error.message)
+      return
+    }
 
     loadLikes()
   }
