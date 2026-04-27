@@ -39,17 +39,16 @@ export default function DashboardPage() {
             {email}
           </p>
 
-          {/* NEW: article buttons */}
           <div className="mt-6 flex flex-wrap justify-center gap-4">
             <Link
-              href="/article"
+              href="/articles"
               className="rounded-2xl bg-blue-600 px-6 py-3 font-semibold transition hover:bg-blue-500"
             >
               View Articles
             </Link>
 
             <Link
-              href="/article/new"
+              href="/articles/new"
               className="rounded-2xl bg-purple-600 px-6 py-3 font-semibold transition hover:bg-purple-500"
             >
               Publish Article

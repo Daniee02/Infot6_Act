@@ -15,7 +15,7 @@ type Article = {
 
 export default function ArticleDetailPage() {
   const params = useParams()
-  const id = Number(params.id)   // this "id" comes from the [id] folder name
+  const id = Number(params.id)
   const [article, setArticle] = useState<Article | null>(null)
 
   useEffect(() => {

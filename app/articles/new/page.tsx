@@ -8,32 +8,40 @@ export default function NewArticlePage() {
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
   const [message, setMessage] = useState('')
+  const [loading, setLoading] = useState(false)
   const router = useRouter()
 
   const handlePublish = async () => {
     setMessage('')
+    setLoading(true)
 
     const { data: userData } = await supabase.auth.getUser()
     const user = userData.user
 
     if (!user) {
       setMessage('You must be logged in.')
+      setLoading(false)
       return
     }
 
-    const { error } = await supabase.from('articles').insert([
-      {
+    const { data, error } = await supabase
+      .from('articles')
+      .insert({
         title,
         content,
         author_id: user.id,
-      },
-    ])
+      })
+      .select('id')
+      .single()
 
     if (error) {
       setMessage(error.message)
-    } else {
-      router.push('/articles')
+    } else if (data) {
+      setMessage('Article published successfully!')
+      router.push(`/articles/${data.id}`)
     }
+
+    setLoading(false)
   }
 
   return (
@@ -56,13 +64,16 @@ export default function NewArticlePage() {
           className="mt-4 w-full rounded-2xl bg-slate-900 px-4 py-3"
         />
 
-        {message && <p className="mt-4 text-red-300">{message}</p>}
+        {message && (
+          <p className="mt-4 text-sm text-red-300">{message}</p>
+        )}
 
         <button
           onClick={handlePublish}
-          className="mt-6 rounded-2xl bg-blue-600 px-6 py-3 font-semibold hover:bg-blue-500"
+          disabled={loading}
+          className="mt-6 rounded-2xl bg-blue-600 px-6 py-3 font-semibold hover:bg-blue-500 disabled:opacity-60"
         >
-          Publish
+          {loading ? 'Publishing...' : 'Publish'}
         </button>
       </div>
     </main>
