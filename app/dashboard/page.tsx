@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { supabase } from '../../lib/supabase'
 
 export default function DashboardPage() {
@@ -37,6 +38,23 @@ export default function DashboardPage() {
           <p className="mt-2 break-all text-xl font-semibold text-blue-300">
             {email}
           </p>
+
+          {/* NEW: article buttons */}
+          <div className="mt-6 flex flex-wrap justify-center gap-4">
+            <Link
+              href="/article"
+              className="rounded-2xl bg-blue-600 px-6 py-3 font-semibold transition hover:bg-blue-500"
+            >
+              View Articles
+            </Link>
+
+            <Link
+              href="/article/new"
+              className="rounded-2xl bg-purple-600 px-6 py-3 font-semibold transition hover:bg-purple-500"
+            >
+              Publish Article
+            </Link>
+          </div>
 
           <button
             onClick={handleLogout}
