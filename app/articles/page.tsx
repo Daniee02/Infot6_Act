@@ -8,58 +8,58 @@ type Article = {
   id: number
   title: string
   content: string
-  created_at: string
 }
 
 export default function ArticlesPage() {
   const [articles, setArticles] = useState<Article[]>([])
 
   useEffect(() => {
-    const loadArticles = async () => {
+    const load = async () => {
       const { data, error } = await supabase
         .from('articles')
-        .select('*')
+        .select('id, title, content')
         .order('created_at', { ascending: false })
 
       if (!error && data) setArticles(data)
     }
 
-    loadArticles()
+    load()
   }, [])
 
   return (
     <main className="min-h-screen bg-slate-950 px-6 py-12 text-white">
-      <div className="mx-auto max-w-5xl">
-        <div className="mb-8 flex items-center justify-between">
-          <h1 className="text-4xl font-bold">Articles</h1>
+      <div className="mx-auto max-w-3xl">
+        <div className="mb-6 flex items-center justify-between">
+          <h1 className="text-3xl font-bold">Articles</h1>
           <Link
             href="/articles/new"
-            className="rounded-2xl bg-blue-600 px-5 py-3 font-semibold hover:bg-blue-500"
+            className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold hover:bg-blue-500"
           >
-            Publish Article
+            Publish
           </Link>
         </div>
 
-        <div className="grid gap-6">
-          {articles.map((article) => (
-            <Link
-              key={article.id}
-              href={`/articles/${article.id}`}
-              className="rounded-3xl border border-white/10 bg-white/5 p-6 transition hover:bg-white/10"
-            >
-              <h2 className="text-2xl font-semibold">{article.title}</h2>
-              <p className="mt-3 line-clamp-3 text-slate-300">
-                {article.content}
-              </p>
-            </Link>
-          ))}
+        {articles.length === 0 && (
+          <p className="text-slate-300">
+            No articles yet. Click “Publish” to add one.
+          </p>
+        )}
 
-          {articles.length === 0 && (
-            <p className="text-slate-300">
-              No articles yet. Click “Publish Article” to add one.
-            </p>
-          )}
-        </div>
+        <ul className="space-y-4">
+          {articles.map((a) => (
+            <li key={a.id}>
+              <Link
+                href={`/articles/${a.id}`}
+                className="block rounded-2xl border border-white/10 bg-slate-900 px-4 py-3 hover:bg-slate-800"
+              >
+                <h2 className="text-xl font-semibold">{a.title}</h2>
+                <p className="mt-1 line-clamp-2 text-sm text-slate-300">
+                  {a.content}
+                </p>
+              </Link>
+            </li>
+          ))}
+        </ul>
       </div>
     </main>
   )

@@ -18,7 +18,10 @@ export default function LikeButton({ articleId }: { articleId: number }) {
   const handleLike = async () => {
     const { data } = await supabase.auth.getUser()
     const user = data.user
-    if (!user) return
+    if (!user) {
+      alert('Please log in to like.')
+      return
+    }
 
     await supabase.from('article_likes').upsert({
       article_id: articleId,
@@ -35,7 +38,7 @@ export default function LikeButton({ articleId }: { articleId: number }) {
   return (
     <button
       onClick={handleLike}
-      className="rounded-2xl bg-pink-600 px-4 py-2 font-semibold hover:bg-pink-500"
+      className="rounded-xl bg-pink-600 px-4 py-2 text-sm font-semibold hover:bg-pink-500"
     >
       Like ({count})
     </button>

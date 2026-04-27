@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import { supabase } from '../../../lib/supabase'
 import LikeButton from '../../../components/LikeButton'
-import ShareButton from '../../../components/ShareButton'
 import CommentSection from '../../../components/CommentSection'
 
 type Article = {
@@ -22,13 +21,11 @@ export default function ArticleDetailPage() {
     const loadArticle = async () => {
       const { data, error } = await supabase
         .from('articles')
-        .select('*')
+        .select('id, title, content')
         .eq('id', id)
         .single()
 
-      if (!error && data) {
-        setArticle(data)
-      }
+      if (!error && data) setArticle(data)
     }
 
     if (id) loadArticle()
@@ -37,22 +34,21 @@ export default function ArticleDetailPage() {
   if (!article) {
     return (
       <main className="min-h-screen bg-slate-950 px-6 py-12 text-white">
-        <div className="mx-auto max-w-4xl">Loading...</div>
+        <div className="mx-auto max-w-3xl">Loading...</div>
       </main>
     )
   }
 
   return (
     <main className="min-h-screen bg-slate-950 px-6 py-12 text-white">
-      <div className="mx-auto max-w-4xl">
-        <h1 className="text-4xl font-bold">{article.title}</h1>
-        <p className="mt-6 whitespace-pre-line text-slate-300">
+      <div className="mx-auto max-w-3xl">
+        <h1 className="text-3xl font-bold">{article.title}</h1>
+        <p className="mt-4 whitespace-pre-line text-slate-200">
           {article.content}
         </p>
 
-        <div className="mt-8 flex gap-4">
+        <div className="mt-6">
           <LikeButton articleId={article.id} />
-          <ShareButton />
         </div>
 
         <CommentSection articleId={article.id} />
