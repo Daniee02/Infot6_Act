@@ -7,7 +7,7 @@ type Comment = {
   id: number
   author_name: string
   author_initials: string
-  content: string
+  comment_text: string
   created_at: string
 }
 
@@ -27,11 +27,17 @@ export default function CommentSection({ articleId }: { articleId: number }) {
   const [posting, setPosting] = useState(false)
   const [focused, setFocused] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [toast, setToast] = useState('')
+
+  const showToast = (msg: string) => {
+    setToast(msg)
+    setTimeout(() => setToast(''), 3000)
+  }
 
   useEffect(() => {
     const fetchComments = async () => {
       const { data } = await supabase
-        .from('comments')
+        .from('article_comments')
         .select('*')
         .eq('article_id', articleId)
         .order('created_at', { ascending: false })
@@ -43,23 +49,23 @@ export default function CommentSection({ articleId }: { articleId: number }) {
 
   const handlePost = async () => {
     if (!text.trim() || posting) return
+
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) { showToast('Please sign in to comment.'); return }
+
     setPosting(true)
-
     try {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) { alert('Please sign in to comment.'); return }
-
       const name = user.user_metadata?.full_name || user.email || 'Anonymous'
       const initials = name.split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase()
 
       const { data, error } = await supabase
-        .from('comments')
+        .from('article_comments')
         .insert({
           article_id: articleId,
-          author_id: user.id,
+          user_id: user.id,
           author_name: name,
           author_initials: initials,
-          content: text.trim(),
+          comment_text: text.trim(),
         })
         .select()
         .single()
@@ -67,8 +73,9 @@ export default function CommentSection({ articleId }: { articleId: number }) {
       if (error) throw error
       setComments(prev => [data, ...prev])
       setText('')
-    } catch (err) {
-      console.error(err)
+      showToast('💬 Comment posted!')
+    } catch (err: any) {
+      showToast('Failed to post comment.')
     } finally {
       setPosting(false)
     }
@@ -76,17 +83,27 @@ export default function CommentSection({ articleId }: { articleId: number }) {
 
   return (
     <div style={{ marginTop: 56 }}>
+      {/* Toast */}
+      {toast && (
+        <div style={{
+          position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)',
+          background: 'var(--bg-elevated)', border: '1px solid var(--border-strong)',
+          borderRadius: 'var(--radius)', padding: '10px 20px',
+          fontSize: 13, fontWeight: 500, color: 'var(--text-primary)',
+          boxShadow: 'var(--shadow-lg)', zIndex: 100,
+          animation: 'fadeUp 0.2s ease forwards',
+        }}>
+          {toast}
+        </div>
+      )}
+
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 28 }}>
         <h3 style={{ fontSize: 20, fontWeight: 700, letterSpacing: '-0.02em' }}>Discussion</h3>
         <span className="tag tag-neutral" style={{ fontSize: 12 }}>{comments.length}</span>
       </div>
 
       {/* Input */}
-      <div className="card" style={{
-        padding: 20, marginBottom: 32,
-        borderColor: focused ? 'var(--border-focus)' : 'var(--border)',
-        transition: 'border-color 0.2s',
-      }}>
+      <div className="card" style={{ padding: 20, marginBottom: 32, borderColor: focused ? 'var(--border-focus)' : 'var(--border)', transition: 'border-color 0.2s' }}>
         <div style={{ display: 'flex', gap: 14 }}>
           <div className="avatar avatar-md">ME</div>
           <div style={{ flex: 1 }}>
@@ -97,23 +114,13 @@ export default function CommentSection({ articleId }: { articleId: number }) {
               onBlur={() => setFocused(false)}
               placeholder="Share your thoughts or questions…"
               rows={focused || text ? 4 : 2}
-              style={{
-                width: '100%', background: 'transparent', border: 'none',
-                outline: 'none', resize: 'none', fontFamily: 'var(--font-body)',
-                fontSize: 15, color: 'var(--text-primary)', lineHeight: 1.65,
-                caretColor: 'var(--primary)',
-              }}
+              style={{ width: '100%', background: 'transparent', border: 'none', outline: 'none', resize: 'none', fontFamily: 'var(--font-body)', fontSize: 15, color: 'var(--text-primary)', lineHeight: 1.65, caretColor: 'var(--primary)' }}
             />
             {(focused || text) && (
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 12, paddingTop: 12, borderTop: '1px solid var(--border)' }}>
-                <button className="btn btn-ghost btn-sm" onClick={() => { setText(''); setFocused(false) }}>
-                  Cancel
-                </button>
+                <button className="btn btn-ghost btn-sm" onClick={() => { setText(''); setFocused(false) }}>Cancel</button>
                 <button className="btn btn-primary btn-sm" onClick={handlePost} disabled={!text.trim() || posting}>
-                  {posting
-                    ? <><div className="spinner" style={{ width: 13, height: 13 }} /> Posting</>
-                    : 'Post comment'
-                  }
+                  {posting ? <><div className="spinner" style={{ width: 13, height: 13 }} /> Posting</> : 'Post comment'}
                 </button>
               </div>
             )}
@@ -129,7 +136,7 @@ export default function CommentSection({ articleId }: { articleId: number }) {
       ) : comments.length === 0 ? (
         <div className="empty-state" style={{ padding: '40px 0' }}>
           <div className="empty-state-icon" style={{ fontSize: 20 }}>💬</div>
-          <p style={{ fontSize: 14 }}>No comments yet. Be the first!</p>
+          <p style={{ fontSize: 14 }}>No comments yet. Start the discussion!</p>
         </div>
       ) : (
         <div>
@@ -141,7 +148,7 @@ export default function CommentSection({ articleId }: { articleId: number }) {
                   {comment.author_name}
                   <span className="comment-time">{timeAgo(comment.created_at)}</span>
                 </div>
-                <div className="comment-text">{comment.content}</div>
+                <div className="comment-text">{comment.comment_text}</div>
               </div>
             </div>
           ))}

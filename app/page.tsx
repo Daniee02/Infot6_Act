@@ -6,7 +6,7 @@ const POPULAR_TAGS = ['transformers', 'rlhf', 'nlp', 'computer-vision', 'alignme
 async function getArticles() {
   const { data } = await supabase
     .from('articles')
-    .select('*')
+    .select('*, article_likes(count), article_comments(count)')
     .order('created_at', { ascending: false })
     .limit(12)
   return data ?? []
@@ -19,6 +19,8 @@ function ArticleCard({ article }: { article: any }) {
   const initials = (article.author_name || 'AN')
     .split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase()
   const tags: string[] = article.tags ?? []
+  const likesCount = article.article_likes?.[0]?.count ?? 0
+  const commentsCount = article.article_comments?.[0]?.count ?? 0
 
   return (
     <Link href={`/articles/${article.id}`} style={{ display: 'block' }}>
@@ -27,12 +29,13 @@ function ArticleCard({ article }: { article: any }) {
           {tags.slice(0, 2).map(tag => (
             <span key={tag} className="tag tag-primary">{tag}</span>
           ))}
+          {tags.length === 0 && <span className="tag tag-neutral">article</span>}
           <span className="article-reading-time" style={{ marginLeft: 'auto' }}>
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
               <circle cx="6" cy="6" r="5" stroke="currentColor" strokeWidth="1.2" />
               <path d="M6 3.5V6l1.5 1.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
             </svg>
-            {article.reading_time ?? '5'} min
+            {article.reading_time ?? 5} min
           </span>
         </div>
         <div>
@@ -48,8 +51,8 @@ function ArticleCard({ article }: { article: any }) {
             <span style={{ color: 'var(--text-muted)' }}>· {date}</span>
           </div>
           <div className="article-card-stats">
-            <span>♥ {article.likes_count ?? 0}</span>
-            <span>💬 {article.comments_count ?? 0}</span>
+            <span>♥ {likesCount}</span>
+            <span>💬 {commentsCount}</span>
           </div>
         </div>
       </article>
@@ -81,7 +84,6 @@ export default async function HomePage() {
 
   return (
     <>
-      {/* Hero */}
       <section className="hero">
         <div className="container">
           <div className="hero-label anim-fade-in">
@@ -89,8 +91,7 @@ export default async function HomePage() {
             Explore · Learn · Publish
           </div>
           <h1 className="hero-title anim-fade-up">
-            The Frontier of{' '}
-            <span className="gradient-text">Machine Learning</span>
+            The Frontier of <span className="gradient-text">Machine Learning</span>
           </h1>
           <p className="hero-subtitle anim-fade-up delay-100">
             Deep-dive articles, research breakdowns, and engineering guides —
@@ -108,7 +109,6 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* Tags */}
       <section className="section-sm">
         <div className="container">
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
@@ -122,15 +122,12 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* Articles */}
       <section className="section-sm">
         <div className="container">
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 28 }}>
             <div>
               <div className="section-label" style={{ marginBottom: 8 }}>Latest articles</div>
-              <h2 style={{ fontSize: 26, fontWeight: 700, letterSpacing: '-0.02em' }}>
-                Fresh from the community
-              </h2>
+              <h2 style={{ fontSize: 26, fontWeight: 700, letterSpacing: '-0.02em' }}>Fresh from the community</h2>
             </div>
             {articles.length > 0 && (
               <Link href="/articles" className="btn btn-ghost btn-sm">View all</Link>
@@ -149,7 +146,6 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* CTA */}
       <section className="section">
         <div className="container">
           <div className="card" style={{

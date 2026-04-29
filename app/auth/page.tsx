@@ -27,18 +27,32 @@ export default function AuthPage() {
     setLoading(true)
     try {
       if (mode === 'signin') {
-        const { error } = await supabase.auth.signInWithPassword({ email, password })
-        if (error) throw error
-        router.push('/')
-        router.refresh()
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password })
+        if (error) {
+          if (error.message.includes('Email not confirmed')) {
+            setError('Please confirm your email first. Check your inbox.')
+          } else if (error.message.includes('Invalid login')) {
+            setError('Wrong email or password.')
+          } else {
+            setError(error.message)
+          }
+          return
+        }
+        if (data.user) {
+          router.push('/')
+          router.refresh()
+        }
       } else {
         const { error } = await supabase.auth.signUp({
           email,
           password,
-          options: { data: { full_name: name } }
+          options: {
+            data: { full_name: name },
+            emailRedirectTo: `${window.location.origin}/auth/confirm`,
+          }
         })
         if (error) throw error
-        setSuccess('Check your email for a confirmation link!')
+        setSuccess('✅ Account created! Check your email and click the confirmation link.')
       }
     } catch (err: any) {
       setError(err.message || 'Something went wrong.')
@@ -179,10 +193,10 @@ export default function AuthPage() {
                 fontSize: 13,
                 color: 'var(--danger)',
                 display: 'flex',
-                alignItems: 'center',
+                alignItems: 'flex-start',
                 gap: 8,
               }}>
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{ flexShrink: 0, marginTop: 1 }}>
                   <circle cx="7" cy="7" r="6" stroke="currentColor" strokeWidth="1.3" />
                   <path d="M7 4.5v3M7 9v.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
                 </svg>
@@ -200,10 +214,11 @@ export default function AuthPage() {
                 fontSize: 13,
                 color: 'var(--success)',
                 display: 'flex',
-                alignItems: 'center',
+                alignItems: 'flex-start',
                 gap: 8,
+                lineHeight: 1.6,
               }}>
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{ flexShrink: 0, marginTop: 1 }}>
                   <circle cx="7" cy="7" r="6" stroke="currentColor" strokeWidth="1.3" />
                   <path d="M4.5 7l2 2 3-3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
@@ -219,8 +234,10 @@ export default function AuthPage() {
               style={{ width: '100%', justifyContent: 'center', marginTop: 4, padding: '13px 0' }}
             >
               {loading ? (
-                <><div className="spinner" style={{ width: 16, height: 16 }} />
-                {mode === 'signin' ? 'Signing in…' : 'Creating account…'}</>
+                <>
+                  <div className="spinner" style={{ width: 16, height: 16 }} />
+                  {mode === 'signin' ? 'Signing in…' : 'Creating account…'}
+                </>
               ) : (
                 mode === 'signin' ? 'Sign in' : 'Create account'
               )}
@@ -239,7 +256,9 @@ export default function AuthPage() {
             onClick={async () => {
               await supabase.auth.signInWithOAuth({
                 provider: 'github',
-                options: { redirectTo: `${window.location.origin}/auth/confirm` }
+                options: {
+                  redirectTo: `${window.location.origin}/auth/confirm`,
+                }
               })
             }}
             className="btn btn-secondary"
@@ -261,14 +280,19 @@ export default function AuthPage() {
           )}
         </div>
 
+        {/* Back home */}
         <div style={{ textAlign: 'center', marginTop: 20 }}>
-          <Link href="/" style={{ fontSize: 13, color: 'var(--text-muted)', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+          <Link href="/" style={{
+            fontSize: 13, color: 'var(--text-muted)',
+            display: 'inline-flex', alignItems: 'center', gap: 6,
+          }}>
             <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
               <path d="M8 2.5L4 6.5l4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
             Back to home
           </Link>
         </div>
+
       </div>
     </div>
   )
